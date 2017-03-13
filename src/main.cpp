@@ -30,37 +30,6 @@
 #include "ITM_write.h"
 #include "ABBcontroller.h"
 
-static volatile int counter;
-static volatile uint32_t systicks;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-/**
- * @brief	Handle interrupt from SysTick timer
- * @return	Nothing
- */
-void SysTick_Handler(void)
-{
-	systicks++;
-	if(counter > 0) counter--;
-}
-#ifdef __cplusplus
-}
-#endif
-
-void Sleep(int ms)
-{
-	counter = ms;
-	while(counter > 0) {
-		__WFI();
-	}
-}
-
-/* this function is required by the modbus library */
-uint32_t millis() {
-	return systicks;
-}
 
 
 void printRegister(ModbusMaster& node, uint16_t reg) {
@@ -92,7 +61,7 @@ bool setFrequency(ModbusMaster& node, uint16_t freq) {
 	ctr = 0;
 	atSetpoint = false;
 	do {
-		Sleep(delay);
+//		Sleep(delay);
 		// read status word
 		result = node.readHoldingRegisters(3, 1);
 		// check if we are at setpoint
@@ -119,7 +88,7 @@ void abbModbusTest() {
 
 	printRegister(node, 3); // for debugging
 
-	Sleep(1000); // give converter some time to set up
+	//Sleep(1000); // give converter some time to set up
 	// note: we should have a startup state machine that check converter status and acts per current status
 	//       but we take the easy way out and just wait a while and hope that everything goes well
 
@@ -185,7 +154,7 @@ void i2cTest() {
 		else {
 			DEBUGOUT("Error reading pressure.\r\n");
 		}
-		Sleep(1000);
+		//Sleep(1000);
 	}
 }
 

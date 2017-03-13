@@ -20,8 +20,19 @@ public:
 	ABBcontroller();
 	void autoMeasure();
 	virtual ~ABBcontroller();
+	bool getMode();
+	bool measureAndCompare();
+	void printRegister(uint16_t reg);
+	bool setFrequency(uint16_t freq);
+	bool startAbb();
+	bool stopAbb();
+
+
 private:
 	bool autoMode;
+	ModbusMaster *node;
+	//I2C i2c;
+	uint16_t freq;
 
 };
 

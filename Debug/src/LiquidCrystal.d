@@ -1,6 +1,5 @@
-src/ModbusMaster.o src/ModbusMaster.d: ../src/ModbusMaster.cpp \
- ../src/ModbusMaster.h ../src/word.h ../src/SerialPort.h \
- C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_board_nxp_lpcxpresso_1549\inc/board.h \
+src/LiquidCrystal.o src/LiquidCrystal.d: ../src/LiquidCrystal.cpp \
+ ../src/LiquidCrystal.h \
  C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/chip.h \
  C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/lpc_types.h \
  C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/sys_config.h \
@@ -48,17 +47,9 @@ src/ModbusMaster.o src/ModbusMaster.d: ../src/ModbusMaster.cpp \
  C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/i2cm_15xx.h \
  C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/i2c_common_15xx.h \
  C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/i2cs_15xx.h \
- C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_board_nxp_lpcxpresso_1549\inc/board_api.h \
- C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/lpc_types.h \
- ../src/crc16.h
+ ../src/DigitalIoPin.h
 
-../src/ModbusMaster.h:
-
-../src/word.h:
-
-../src/SerialPort.h:
-
-C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_board_nxp_lpcxpresso_1549\inc/board.h:
+../src/LiquidCrystal.h:
 
 C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/chip.h:
 
@@ -154,8 +145,4 @@ C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/i2c_com
 
 C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/i2cs_15xx.h:
 
-C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_board_nxp_lpcxpresso_1549\inc/board_api.h:
-
-C:\Users\Hege\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/lpc_types.h:
-
-../src/crc16.h:
+../src/DigitalIoPin.h:
