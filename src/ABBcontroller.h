@@ -18,7 +18,8 @@
 class ABBcontroller {
 public:
 	ABBcontroller();
-	void autoMeasure();
+	bool autoMeasure();
+	bool manualMeasure();
 	virtual ~ABBcontroller();
 	bool getMode();
 	void printRegister(uint16_t reg);
@@ -34,6 +35,7 @@ private:
 	//I2C i2c;
 	uint16_t frequency;
 	uint16_t pasc;
+	int tickLimit; //One tick is 100ms
 
 
 };

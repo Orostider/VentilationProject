@@ -112,7 +112,7 @@ bool ABBcontroller::setFrequency(uint16_t freq){
 	ctr = 0;
 	atSetpoint = false;
 	do {
-		//		Sleep(delay);
+		Sleep(delay);
 		// read status word
 		result = node->readHoldingRegisters(3, 1);
 		// check if we are at setpoint
@@ -132,14 +132,25 @@ bool ABBcontroller::getMode(){
 	return ABBcontroller::autoMode;
 }
 
-void ABBcontroller::autoMeasure(){
+bool ABBcontroller::manualMeasure(){
+	ABBcontroller::setFrequency(frequency);
+}
+
+bool ABBcontroller::autoMeasure(){
 	uint16_t i;
-	if (ABBcontroller::measureAndCompare() == 1){
-		i = frequency+1;
-		ABBcontroller::setFrequency(i);
-	} else if (ABBcontroller::measureAndCompare() == -1 && (frequency -1) != 0) {
-		i = frequency-1;
-		ABBcontroller::setFrequency(i);
+	if (ABBcontroller::measureAndCompare() == 1 && (frequency -1) != 0){
+
+		while(ABBcontroller::measureAndCompare() == 1){
+			i = frequency-1;
+			ABBcontroller::setFrequency(i);
+
+		}
+	} else if (ABBcontroller::measureAndCompare() == -1) {
+
+		while(ABBcontroller::measureAndCompare() == -1){
+			i = frequency+1;
+			ABBcontroller::setFrequency(i);
+		}
 	} else {
 
 	}
@@ -161,7 +172,7 @@ int ABBcontroller::measureAndCompare(){
 	else {
 		DEBUGOUT("Error reading pressure.\r\n");
 	}
-	//Sleep(1000);
+	Sleep(100);
 
 	if (pressure > pasc){
 		return 1;
