@@ -10,6 +10,8 @@
 
 #include <cstring>
 #include <cstdio>
+#include <stdlib.h> // itoa
+
 
 #include "ModbusMaster.h"
 #include "I2C.h"
@@ -48,6 +50,7 @@ private:
 	int userInterfaceState, selection;
 	enum interfaceControls { ok, left, right };
 	DigitalIoPin *switch1Ok, *switch2Left, *switch3Right;
+	uint16_t frequencyTemp, pascTemp;
 
 };
 
