@@ -51,8 +51,8 @@ ABBcontroller::ABBcontroller() {
 	autoMode = true;
 	node = new ModbusMaster(2);
 	//I2C i2c = new I2C(0, 100000);
-	frequency = 0;
-	pasc = 50;
+	frequency = 5000;
+	pasc = 20;
 
 	// UI
 	// Initializing the LCD
@@ -156,26 +156,75 @@ bool ABBcontroller::getMode(){
 
 bool ABBcontroller::manualMeasure(){
 	ABBcontroller::setFrequency(frequency);
+	return true;
 }
 
+
 bool ABBcontroller::autoMeasure(){
-	uint16_t i;
-	if (ABBcontroller::measureAndCompare() == 1 && (frequency -1) != 0){
+	//uint16_t inc;
+	int i = 0;
+	int j = 0;
+	uint8_t result;
+
+	if (ABBcontroller::measureAndCompare() == 1 && (frequency -250) >= 1000){
 
 		while(ABBcontroller::measureAndCompare() == 1){
-			i = frequency-1;
-			ABBcontroller::setFrequency(i);
+			// slave: read (2) 16-bit registers starting at register 102 to RX buffer
+			j = 0;
+			do {
+				result = node->readHoldingRegisters(102, 2);
+				j++;
+			} while(j < 3 && result != node->ku8MBSuccess);
+			// note: sometimes we don't succeed on first read so we try up to threee times
+			// if read is successful print frequency and current (scaled values)
+			if (result == node->ku8MBSuccess) {
+				printf("F=%4d, I=%4d  (ctr=%d)\n", node->getResponseBuffer(0), node->getResponseBuffer(1),j);
+			}
+			else {
+				printf("ctr=%d\n",j);
+			}
+
+			Sleep(3000);
+			i++;
+			if(i >= 20) {
+				i=0;
+			}
+			frequency= frequency-250;
+			ABBcontroller::setFrequency(frequency);
 
 		}
 	} else if (ABBcontroller::measureAndCompare() == -1) {
 
 		while(ABBcontroller::measureAndCompare() == -1){
-			i = frequency+1;
-			ABBcontroller::setFrequency(i);
+			// slave: read (2) 16-bit registers starting at register 102 to RX buffer
+			j = 0;
+			do {
+				result = node->readHoldingRegisters(102, 2);
+				j++;
+			} while(j < 3 && result != node->ku8MBSuccess);
+			// note: sometimes we don't succeed on first read so we try up to threee times
+			// if read is successful print frequency and current (scaled values)
+			if (result == node->ku8MBSuccess) {
+				printf("F=%4d, I=%4d  (ctr=%d)\n", node->getResponseBuffer(0), node->getResponseBuffer(1),j);
+			}
+			else {
+				printf("ctr=%d\n",j);
+			}
+
+			Sleep(3000);
+			i++;
+			if(i >= 20) {
+				i=0;
+			}
+			frequency+=250;
+			ABBcontroller::setFrequency(frequency);
 		}
 	} else {
 
 	}
+
+
+	return true;
 }
 
 int ABBcontroller::measureAndCompare(){
@@ -194,8 +243,8 @@ int ABBcontroller::measureAndCompare(){
 	else {
 		DEBUGOUT("Error reading pressure.\r\n");
 	}
-	Sleep(100);
-
+	//Sleep(100);
+	pressure = pressure/240.0;
 	if (pressure > pasc){
 		return 1;
 	} else if (pressure == pasc){

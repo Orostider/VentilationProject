@@ -175,9 +175,13 @@ int main(void)
 	//i2cTest();
 
 	ABBcontroller abbController;
-
+	abbController.startAbb();
 	while (1) {
 		abbController.readUserinput();
+
+		if (abbController.getMode()){
+			abbController.autoMeasure();
+		}
 	}
 
 	return 1;
