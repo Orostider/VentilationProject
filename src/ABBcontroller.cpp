@@ -9,12 +9,10 @@
 #include <cstring>
 #include <cstdio>
 
-#include "ModbusMaster.h"
-#include "I2C.h"
-#include "ITM_write.h"
-
 static volatile int counter;
 static volatile uint32_t systicks;
+static uint16_t frequencyLimit = 1000;
+static uint16_t pascLimit = 120;
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,7 +52,7 @@ ABBcontroller::ABBcontroller() {
 	frequency = 0;
 	pasc = 50;
 
-	// UI
+	// ------------------------- USER INTRERFACE
 	// Initializing the LCD
 	DigitalIoPin* pin1 = new DigitalIoPin(0, 8, false);
 	DigitalIoPin* pin2 = new DigitalIoPin(1, 6, false);
@@ -63,7 +61,6 @@ ABBcontroller::ABBcontroller() {
 	DigitalIoPin* pin5 = new DigitalIoPin(0, 6, false);
 	DigitalIoPin* pin6 = new DigitalIoPin(0, 7, false);
 	lcd = new LiquidCrystal(pin1, pin2, pin3, pin4, pin5, pin6);
-	lcd->print("A");
 
 	// Setting default state for user interface
 	userInterfaceState = menu;
@@ -75,6 +72,9 @@ ABBcontroller::ABBcontroller() {
 	switch3Right = new DigitalIoPin(1, 9, true, true, true);
 
 	drawUserInterface();
+
+	frequencyTemp = 0; pascTemp = 0;
+	//
 }
 
 bool ABBcontroller::startAbb(){
@@ -194,31 +194,45 @@ int ABBcontroller::measureAndCompare(){
 	}
 }
 
+// TODO showing the notification/error from automatic mode
 void ABBcontroller::drawUserInterface() {
-	ITM_write("?????????\n");
+	char testbuffer[30];
+	snprintf ( testbuffer, 100, "state: %d selection: %d \n", userInterfaceState, selection);
+	ITM_write(testbuffer);
 	lcd->clear();
 	lcd->setCursor(0,0);
+
+	char buffer [33];
+	std::string tempString = "";
+
 	switch(userInterfaceState) {
 	case menu:
-		ITM_write("? \n");
 		if (selection == automaticMode) {
-			ITM_write("auto \n");
 			lcd->print("Automatic Mode");
+
 		} else if (selection == manualMode) {
-			ITM_write("manual \n");
 			lcd->print("Manual Mode");
 		}
-
 		break;
 
 	case automaticMode:
-		ITM_write("?? \n");
-		lcd->print("set Automatic mode");
+		// upper line
+		lcd->print("Set pressure(?):");
+		//lower line
+		lcd->setCursor(0,1);
+		itoa(pascTemp, buffer, 10);
+		tempString = std::string(buffer);
+		lcd->print(tempString);
 		break;
 
 	case manualMode:
-		ITM_write("??? \n");
-		lcd->print("set manual mode");
+		// upper line
+		lcd->print("Set fan RPM:");
+		// lower line
+		lcd->setCursor(0,1);
+		itoa(frequencyTemp, buffer, 10);
+		tempString = std::string(buffer);
+		lcd->print(tempString);
 		break;
 
 	default:
@@ -230,70 +244,61 @@ void ABBcontroller::drawUserInterface() {
 void ABBcontroller::readUserinput() {
 	int userInput = 5;
 	if (switch1Ok->read()) {
-		ITM_write("ok\n");
 		userInput = ok;
-	}
-	else if (switch2Left->read()) {
-		ITM_write("left\n");
+	} else if (switch2Left->read()) {
 		userInput = left;
-	}
-	else if (switch3Right->read()) {
-		ITM_write("right\n");
+	} else if (switch3Right->read()) {
 		userInput = right;
 	} else {
 		return;
 	}
 
-
 	if (userInterfaceState == menu) { // MENU
-		ITM_write("Menu\n");
-		switch (userInput) {
-		case ok:
+		if (userInput == ok) {
 			userInterfaceState = selection;
-			break;
-		case left:
-			if (selection == 1) {
-				selection = 2;
-			} else selection = 1;
-			break;
-		case right:
-			if (selection == 1) {
-				selection = 2;
-			} else selection = 1;
-			break;
-		default:
-			ITM_write("error at if '(userInterfaceState == menu)'\n");
-			break;
+			// temppien settaus  tähän
+		} else if (userInput == left || userInput == right) { // toggle between automatic and manual mode
+			if (selection == automaticMode) {
+				selection = manualMode;
+			} else selection = automaticMode;
 		}
 
-	} else if (userInterfaceState == autoMode) {
-		ITM_write("Auto.\n");
+	} else if (userInterfaceState == manualMode) { // Freq
 		switch (userInput) {
 		case ok:
 			userInterfaceState = menu;
 			break;
+
 		case left:
-
+			frequencyTemp -= 100;
+			if (frequencyTemp <= 0) frequencyTemp = frequencyLimit;
 			break;
+
 		case right:
-
+			frequencyTemp += 100;
+			if (frequencyTemp >= frequencyLimit) frequencyTemp = 0;
 			break;
+
 		default:
 			ITM_write("error'\n");
 			break;
 		}
-	} else if (userInterfaceState == manualMode) {
-		ITM_write("Manual\n");
+	} else if (userInterfaceState == automaticMode) { // Pasc
 		switch (userInput) {
 		case ok:
 			userInterfaceState = menu;
 			break;
+
 		case left:
-
+			pascTemp -= 5;
+			if (pascTemp <= 0) pascTemp = pascLimit;
 			break;
+
 		case right:
-
+			pascTemp += 5;
+			if (pascTemp >= pascLimit) pascTemp = 0;
 			break;
+
 		default:
 			ITM_write("error'\n");
 			break;
@@ -302,8 +307,9 @@ void ABBcontroller::readUserinput() {
 		ITM_write("ei tänne\n");
 	}
 	drawUserInterface();
-	Sleep(100); // poista tää
+	Sleep(200); // poista tää
 }
+
 ABBcontroller::~ABBcontroller() {
 	// TODO Auto-generated destructor stub
 }
