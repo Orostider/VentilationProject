@@ -51,8 +51,8 @@ ABBcontroller::ABBcontroller() {
 	autoMode = true;
 	node = new ModbusMaster(2);
 	//I2C i2c = new I2C(0, 100000);
-	freq = 0;
-
+	frequency = 0;
+	pasc = 50;
 }
 
 bool ABBcontroller::startAbb(){
@@ -98,6 +98,79 @@ void ABBcontroller::printRegister(uint16_t reg){
 
 }
 
+bool ABBcontroller::setFrequency(uint16_t freq){
+	uint8_t result;
+	int ctr;
+	bool atSetpoint;
+	const int delay = 500;
+
+	node->writeSingleRegister(1, freq); // set motor frequency
+
+	printf("Set freq = %d\n", freq/40); // for debugging
+
+	// wait until we reach set point or timeout occurs
+	ctr = 0;
+	atSetpoint = false;
+	do {
+		//		Sleep(delay);
+		// read status word
+		result = node->readHoldingRegisters(3, 1);
+		// check if we are at setpoint
+		if (result == node->ku8MBSuccess) {
+			if(node->getResponseBuffer(0) & 0x0100) atSetpoint = true;
+		}
+		ctr++;
+	} while(ctr < 20 && !atSetpoint);
+
+	printf("Elapsed: %d\n", ctr * delay); // for debugging
+	frequency = freq;
+	return atSetpoint;
+
+}
+
+bool ABBcontroller::getMode(){
+	return ABBcontroller::autoMode;
+}
+
+void ABBcontroller::autoMeasure(){
+	uint16_t i;
+	if (ABBcontroller::measureAndCompare() == 1){
+		i = frequency+1;
+		ABBcontroller::setFrequency(i);
+	} else if (ABBcontroller::measureAndCompare() == -1 && (frequency -1) != 0) {
+		i = frequency-1;
+		ABBcontroller::setFrequency(i);
+	} else {
+
+	}
+}
+
+int ABBcontroller::measureAndCompare(){
+	I2C i2c(0, 100000);
+
+	uint8_t pressureData[3];
+	uint8_t readPressureCmd = 0xF1;
+	int16_t pressure = 0;
+
+	//ITM_write("täs");
+	if (i2c.transaction(0x40, &readPressureCmd, 1, pressureData, 3)) {
+		/* Output temperature. */
+		pressure = (pressureData[0] << 8) | pressureData[1];
+		DEBUGOUT("Pressure read over I2C is %.1f Pa\r\n",	pressure/240.0);
+	}
+	else {
+		DEBUGOUT("Error reading pressure.\r\n");
+	}
+	//Sleep(1000);
+
+	if (pressure > pasc){
+		return 1;
+	} else if (pressure == pasc){
+		return 0;
+	} else {
+		return -1;
+	}
+}
 ABBcontroller::~ABBcontroller() {
 	// TODO Auto-generated destructor stub
 }
