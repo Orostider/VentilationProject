@@ -14,6 +14,8 @@
 #include "ModbusMaster.h"
 #include "I2C.h"
 #include "ITM_write.h"
+#include "LiquidCrystal.h"
+#include "DigitalIoPin.h"
 
 class ABBcontroller {
 public:
@@ -28,6 +30,9 @@ public:
 	bool startAbb();
 	bool stopAbb();
 	void printData();
+	// UI functions
+	void drawUserInterface(); // näin alkuun ~
+	void readUserinput();
 
 private:
 	bool autoMode;
@@ -37,6 +42,12 @@ private:
 	uint16_t pasc;
 	int tickLimit; //One tick is 100ms
 
+	// User interface
+	LiquidCrystal* lcd;
+	enum userInterfaceStates { menu, automaticMode, manualMode, endOfEnum };
+	int userInterfaceState, selection;
+	enum interfaceControls { ok, left, right };
+	DigitalIoPin *switch1Ok, *switch2Left, *switch3Right;
 
 };
 

@@ -53,6 +53,28 @@ ABBcontroller::ABBcontroller() {
 	//I2C i2c = new I2C(0, 100000);
 	frequency = 0;
 	pasc = 50;
+
+	// UI
+	// Initializing the LCD
+	DigitalIoPin* pin1 = new DigitalIoPin(0, 8, false);
+	DigitalIoPin* pin2 = new DigitalIoPin(1, 6, false);
+	DigitalIoPin* pin3 = new DigitalIoPin(1, 8, false);
+	DigitalIoPin* pin4 = new DigitalIoPin(0, 5, false);
+	DigitalIoPin* pin5 = new DigitalIoPin(0, 6, false);
+	DigitalIoPin* pin6 = new DigitalIoPin(0, 7, false);
+	lcd = new LiquidCrystal(pin1, pin2, pin3, pin4, pin5, pin6);
+	lcd->print("A");
+
+	// Setting default state for user interface
+	userInterfaceState = menu;
+	selection = automaticMode;
+
+	// Initializing switches
+	switch1Ok = new DigitalIoPin(0, 17, true, true, true);
+	switch2Left = new DigitalIoPin(1, 11, true, true, true);
+	switch3Right = new DigitalIoPin(1, 9, true, true, true);
+
+	drawUserInterface();
 }
 
 bool ABBcontroller::startAbb(){
@@ -181,6 +203,117 @@ int ABBcontroller::measureAndCompare(){
 	} else {
 		return -1;
 	}
+}
+
+void ABBcontroller::drawUserInterface() {
+	ITM_write("?????????\n");
+	lcd->clear();
+	lcd->setCursor(0,0);
+	switch(userInterfaceState) {
+	case menu:
+		ITM_write("? \n");
+		if (selection == automaticMode) {
+			ITM_write("auto \n");
+			lcd->print("Automatic Mode");
+		} else if (selection == manualMode) {
+			ITM_write("manual \n");
+			lcd->print("Manual Mode");
+		}
+
+		break;
+
+	case automaticMode:
+		ITM_write("?? \n");
+		lcd->print("set Automatic mode");
+		break;
+
+	case manualMode:
+		ITM_write("??? \n");
+		lcd->print("set manual mode");
+		break;
+
+	default:
+		ITM_write("ei näin! \n");
+		break;
+	}
+}
+
+void ABBcontroller::readUserinput() {
+	int userInput = 5;
+	if (switch1Ok->read()) {
+		ITM_write("ok\n");
+		userInput = ok;
+	}
+	else if (switch2Left->read()) {
+		ITM_write("left\n");
+		userInput = left;
+	}
+	else if (switch3Right->read()) {
+		ITM_write("right\n");
+		userInput = right;
+	} else {
+		return;
+	}
+
+
+	if (userInterfaceState == menu) { // MENU
+		ITM_write("Menu\n");
+		switch (userInput) {
+		case ok:
+			userInterfaceState = selection;
+			break;
+		case left:
+			if (selection == 1) {
+				selection = 2;
+			} else selection = 1;
+			break;
+		case right:
+			if (selection == 1) {
+				selection = 2;
+			} else selection = 1;
+			break;
+		default:
+			ITM_write("error at if '(userInterfaceState == menu)'\n");
+			break;
+		}
+
+	} else if (userInterfaceState == autoMode) {
+		ITM_write("Auto.\n");
+		switch (userInput) {
+		case ok:
+			userInterfaceState = menu;
+			break;
+		case left:
+
+			break;
+		case right:
+
+			break;
+		default:
+			ITM_write("error'\n");
+			break;
+		}
+	} else if (userInterfaceState == manualMode) {
+		ITM_write("Manual\n");
+		switch (userInput) {
+		case ok:
+			userInterfaceState = menu;
+			break;
+		case left:
+
+			break;
+		case right:
+
+			break;
+		default:
+			ITM_write("error'\n");
+			break;
+		}
+	} else {
+		ITM_write("ei tänne\n");
+	}
+	drawUserInterface();
+	Sleep(100); // poista tää
 }
 ABBcontroller::~ABBcontroller() {
 	// TODO Auto-generated destructor stub

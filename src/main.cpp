@@ -163,14 +163,21 @@ int main(void)
 
 	/* Enable and setup SysTick Timer at a periodic rate */
 	SysTick_Config(SystemCoreClock / 1000);
+
+	/* Enable RIT */
+	Chip_RIT_Init(LPC_RITIMER);
+
 	/* Enable ITM printing */
 	ITM_init();
 
 
 	//abbModbusTest();
-	i2cTest();
-	while (1) {
+	//i2cTest();
 
+	ABBcontroller abbController;
+
+	while (1) {
+		abbController.readUserinput();
 	}
 
 	return 1;
