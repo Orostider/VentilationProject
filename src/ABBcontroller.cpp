@@ -349,9 +349,11 @@ void ABBcontroller::drawUserInterface() {
 			lcd->print("Automatic Mode");
 			// second row
 			lcd->setCursor(0,1);
-			if (autoMode) { // P ja haluttu P
+			if (autoMode) { // Wanted pressure + current pressure
 				itoa(pasc, buffer, 10);
 				tempString = "WP:" + std::string(buffer) + " CP:";
+				itoa(pressureCurrent, buffer, 10);
+				tempString += std::string(buffer);
 				lcd->print(tempString);
 
 			} else lcd->print("Activate");
@@ -365,10 +367,8 @@ void ABBcontroller::drawUserInterface() {
 				itoa(frequencyTemp, buffer, 10);
 				tempString = "F:" + std::string(buffer) + "% P:";
 
-				/*itoa(frequency, buffer, 10);
+				itoa(pressureCurrent, buffer, 10);
 				tempString += std::string(buffer) + " Pa";
-				lcd->print(tempString);
-				 */
 				lcd->print(tempString);
 
 			} else lcd->print("Activate");
