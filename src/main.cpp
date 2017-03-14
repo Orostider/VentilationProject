@@ -68,12 +68,11 @@ int main(void)
 	while (1) {
 		abbController.readUserinput();
 
-		/*
 		if (abbController.getMode()){
 			abbController.autoMeasure();
 		} else{
 			abbController.manualMeasure();
-		}*/
+		}
 	}
 
 	return 1;

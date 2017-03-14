@@ -12,8 +12,10 @@
 static volatile int counter;
 static volatile uint32_t systicks;
 static volatile int counterAutoMeasure;
+static volatile int counterAvg;
 static volatile bool flagAutoMeasure;
-
+static volatile bool flagAvg;
+static volatile bool flagMeasure;
 static volatile bool flagSlowAlert;
 //static uint16_t
 static uint16_t pascLimit = 120;
@@ -31,9 +33,16 @@ void SysTick_Handler(void)
 	if(counter > 0) counter--;
 
 	counterAutoMeasure++;
-	if (counterAutoMeasure >= 3000) {
+	counterAvg++;
+	if (counterAutoMeasure >= 5000) {
 		counterAutoMeasure = 0;
 		flagAutoMeasure = true;
+		flagAvg = true;
+	}
+
+	if (counterAvg >= 1000){
+		counterAvg = 0;
+		flagMeasure = true;
 	}
 }
 #ifdef __cplusplus
@@ -63,6 +72,12 @@ ABBcontroller::ABBcontroller() {
 	pasc = 20;
 	tickLimit = 300;
 	oneStep = 250;
+
+	pressureAvg = 0;
+	pressureCount = 0;
+	pressureCurrent = 0;
+
+
 
 	// ------------------------- USER INTRERFACE
 	// Initializing the LCD
@@ -179,6 +194,9 @@ bool ABBcontroller::manualMeasure(){
 
 bool ABBcontroller::autoMeasure(){
 	if (!flagAutoMeasure) {
+		if (flagMeasure){
+			ABBcontroller::measure();
+		}
 		return false;
 	} else {
 		flagAutoMeasure = false;
@@ -187,7 +205,7 @@ bool ABBcontroller::autoMeasure(){
 		int j = 0;
 		uint8_t result;
 
-		if (ABBcontroller::measureAndCompare() == 1 && (frequency -oneStep) >= 1000){
+		if (ABBcontroller::compare() == 1 && (frequency -oneStep) >= 1000){
 
 			//while(ABBcontroller::measureAndCompare() == 1){
 			// slave: read (2) 16-bit registers starting at register 102 to RX buffer
@@ -215,7 +233,7 @@ bool ABBcontroller::autoMeasure(){
 			ABBcontroller::setFrequency(frequency);
 
 			//}
-		} else if (ABBcontroller::measureAndCompare() == -1&& (frequency +oneStep) <= 20000) {
+		} else if (ABBcontroller::compare() == -1&& (frequency +oneStep) <= 20000) {
 
 			//while(ABBcontroller::measureAndCompare() == -1){
 			// slave: read (2) 16-bit registers starting at register 102 to RX buffer
@@ -250,7 +268,7 @@ bool ABBcontroller::autoMeasure(){
 
 	}
 }
-int ABBcontroller::measureAndCompare(){
+void ABBcontroller::measure(){
 	I2C i2c(0, 100000);
 
 	uint8_t pressureData[3];
@@ -261,7 +279,7 @@ int ABBcontroller::measureAndCompare(){
 	if (i2c.transaction(0x40, &readPressureCmd, 1, pressureData, 3)) {
 		/* Output temperature. */
 		pressure = (pressureData[0] << 8) | pressureData[1];
-		DEBUGOUT("Pressure read over I2C is %.1f Pa\r\n",	pressure/240.0);
+
 	}
 	else {
 		DEBUGOUT("Error reading pressure.\r\n");
@@ -269,35 +287,50 @@ int ABBcontroller::measureAndCompare(){
 	//Sleep(100);
 	pressure = pressure/240.0;
 
-	int comparison;
-	if(pressure >= pasc){
-		comparison = pressure - pasc;
+	if (!flagAvg){
+		pressureCount += pressure;
+		flagMeasure = false;
 	} else {
-		comparison = pasc - pressure;
+		pressureAvg = pressureCount/5.0;
+		pressureCurrent = pressureAvg;
+		pressureCount = 0;
+		flagAvg = false;
+		DEBUGOUT("Pressure read over I2C is %.1f Pa\r\n",	pressureCurrent);
+	}
+
+}
+
+int ABBcontroller::compare(){
+	int comparison;
+
+	if(pressureCurrent >= pasc){
+		comparison = pressureCurrent - pasc;
+	} else {
+		comparison = pasc - pressureCurrent;
 	}
 
 	if (comparison < 2){
 		oneStep = 10;
 	} else if (comparison < 5){
-		oneStep = 250;
-	} else if (comparison > 15){
-		oneStep = 2000;
-	}else if (comparison > 10){
+		oneStep = 50;
+	} else if (comparison > 30){
 		oneStep = 1000;
-	} else {
+	}else if (comparison > 10){
 		oneStep = 500;
+	} else {
+		oneStep = 250;
 	}
 
 
-	if (pressure == pasc){
+	if (pressureCurrent == pasc){
 		return 0;
-	} else if (pressure > pasc){
+	} else if (pressureCurrent > pasc){
 		return 1;
 	} else {
 		return -1;
 	}
-}
 
+}
 
 void ABBcontroller::drawUserInterface() {
 	char testbuffer[30];
