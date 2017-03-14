@@ -13,6 +13,8 @@ static volatile int counter;
 static volatile uint32_t systicks;
 static volatile int counterAutoMeasure;
 static volatile bool flagAutoMeasure;
+
+static volatile bool flagSlowAlert;
 //static uint16_t
 static uint16_t pascLimit = 120;
 
@@ -29,8 +31,8 @@ void SysTick_Handler(void)
 	if(counter > 0) counter--;
 
 	counterAutoMeasure++;
-	if (autoMeasureCounter >= 3000) {
-		autoMeasureCounter = 0;
+	if (counterAutoMeasure >= 3000) {
+		counterAutoMeasure = 0;
 		flagAutoMeasure = true;
 	}
 }
@@ -165,23 +167,29 @@ bool ABBcontroller::getMode(){
 }
 
 bool ABBcontroller::manualMeasure(){
-	ABBcontroller::setFrequency(frequency);
-	return true;
+	if (!flagAutoMeasure) {
+		return false;
+	}else {
+		flagAutoMeasure = false;
+		ABBcontroller::setFrequency(frequency);
+		return true;
+	}
 }
 
 
 bool ABBcontroller::autoMeasure(){
 	if (!flagAutoMeasure) {
-		return;
-	} else flagAutoMeasure = false;
-	//uint16_t inc;
-	int i = 0;
-	int j = 0;
-	uint8_t result;
+		return false;
+	} else {
+		flagAutoMeasure = false;
+		//uint16_t inc;
+		int i = 0;
+		int j = 0;
+		uint8_t result;
 
-	if (ABBcontroller::measureAndCompare() == 1 && (frequency -oneStep) >= 1000){
+		if (ABBcontroller::measureAndCompare() == 1 && (frequency -oneStep) >= 1000){
 
-		while(ABBcontroller::measureAndCompare() == 1){
+			//while(ABBcontroller::measureAndCompare() == 1){
 			// slave: read (2) 16-bit registers starting at register 102 to RX buffer
 			j = 0;
 			do {
@@ -198,7 +206,7 @@ bool ABBcontroller::autoMeasure(){
 			}
 			// lippu tähän
 
-			Sleep(3000);
+			//Sleep(3000);
 			i++;
 			if(i >= 20) {
 				i=0;
@@ -206,10 +214,10 @@ bool ABBcontroller::autoMeasure(){
 			frequency= frequency-oneStep;
 			ABBcontroller::setFrequency(frequency);
 
-		}
-	} else if (ABBcontroller::measureAndCompare() == -1) {
+			//}
+		} else if (ABBcontroller::measureAndCompare() == -1&& (frequency +oneStep) <= 20000) {
 
-		while(ABBcontroller::measureAndCompare() == -1){
+			//while(ABBcontroller::measureAndCompare() == -1){
 			// slave: read (2) 16-bit registers starting at register 102 to RX buffer
 			j = 0;
 			do {
@@ -225,22 +233,23 @@ bool ABBcontroller::autoMeasure(){
 				printf("ctr=%d\n",j);
 			}
 
-			Sleep(3000);
+			//Sleep(3000);
 			i++;
 			if(i >= 20) {
 				i=0;
 			}
 			frequency+=oneStep;
 			ABBcontroller::setFrequency(frequency);
+			//}
+		} else {
+
 		}
-	} else {
+
+
+		return true;
 
 	}
-
-
-	return true;
 }
-
 int ABBcontroller::measureAndCompare(){
 	I2C i2c(0, 100000);
 
@@ -270,13 +279,13 @@ int ABBcontroller::measureAndCompare(){
 	if (comparison < 2){
 		oneStep = 10;
 	} else if (comparison < 5){
-		oneStep = 100;
-	} else if (comparison > 15){
-		oneStep = 1000;
-	}else if (comparison > 10){
-		oneStep = 500;
-	} else {
 		oneStep = 250;
+	} else if (comparison > 15){
+		oneStep = 2000;
+	}else if (comparison > 10){
+		oneStep = 1000;
+	} else {
+		oneStep = 500;
 	}
 
 
@@ -338,7 +347,7 @@ void ABBcontroller::drawUserInterface() {
 
 void ABBcontroller::readUserinput() {
 	int userInput = 5;
-	ITM_write("1488\n");
+
 	if (switch1Ok->read()) {
 		userInput = ok;
 	} else if (switch2Left->read()) {
@@ -362,7 +371,7 @@ void ABBcontroller::readUserinput() {
 	} else if (userInterfaceState == manualMode) { // Freq
 		switch (userInput) {
 		case ok:
-			frequency = (10000/100)*frequencyTemp;
+			frequency = (20000/100)*frequencyTemp;
 			userInterfaceState = menu;
 			autoMode = false;
 			break;
@@ -407,7 +416,7 @@ void ABBcontroller::readUserinput() {
 		ITM_write("ei tänne\n");
 	}
 	drawUserInterface();
-	//Sleep(200); // poista tää
+	Sleep(200); // poista tää
 }
 
 ABBcontroller::~ABBcontroller() {
