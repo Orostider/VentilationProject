@@ -11,6 +11,8 @@
 
 static volatile int counter;
 static volatile uint32_t systicks;
+static volatile int counterAutoMeasure;
+static volatile bool flagAutoMeasure;
 //static uint16_t
 static uint16_t pascLimit = 120;
 
@@ -25,6 +27,12 @@ void SysTick_Handler(void)
 {
 	systicks++;
 	if(counter > 0) counter--;
+
+	counterAutoMeasure++;
+	if (autoMeasureCounter >= 3000) {
+		autoMeasureCounter = 0;
+		flagAutoMeasure = true;
+	}
 }
 #ifdef __cplusplus
 }
@@ -163,6 +171,9 @@ bool ABBcontroller::manualMeasure(){
 
 
 bool ABBcontroller::autoMeasure(){
+	if (!flagAutoMeasure) {
+		return;
+	} else flagAutoMeasure = false;
 	//uint16_t inc;
 	int i = 0;
 	int j = 0;
@@ -185,6 +196,7 @@ bool ABBcontroller::autoMeasure(){
 			else {
 				printf("ctr=%d\n",j);
 			}
+			// lippu tähän
 
 			//Sleep(3000);
 			i++;
@@ -328,19 +340,10 @@ void ABBcontroller::readUserinput() {
 	int userInput = 5;
 	ITM_write("1488\n");
 	if (switch1Ok->read()) {
-		while(switch1Ok->read()){
-			Sleep(10);
-		}
 		userInput = ok;
 	} else if (switch2Left->read()) {
-		while(switch1Ok->read()){
-			Sleep(10);
-		}
 		userInput = left;
 	} else if (switch3Right->read()) {
-		while(switch1Ok->read()){
-			Sleep(10);
-		}
 		userInput = right;
 	} else {
 		return;
