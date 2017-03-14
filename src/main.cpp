@@ -67,7 +67,6 @@ int main(void)
 	abbController.startAbb();
 	while (1) {
 		abbController.readUserinput();
-
 		if (abbController.getMode()){
 			abbController.autoMeasure();
 		} else{

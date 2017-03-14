@@ -17,6 +17,7 @@ static volatile bool flagAutoMeasure;
 static volatile bool flagAvg;
 static volatile bool flagMeasure;
 static volatile bool flagSlowAlert;
+static volatile int counterSlow;
 //static uint16_t
 static uint16_t pascLimit = 120;
 
@@ -43,6 +44,11 @@ void SysTick_Handler(void)
 	if (counterAvg >= 1000){
 		counterAvg = 0;
 		flagMeasure = true;
+	}
+	counterSlow++;
+	if (counterSlow >= 30000){
+		counterSlow = 0;
+		flagSlowAlert = true;
 	}
 }
 #ifdef __cplusplus
@@ -189,6 +195,7 @@ bool ABBcontroller::manualMeasure(){
 		return false;
 	}else {
 		flagAutoMeasure = false;
+		ABBcontroller::drawUserInterface();
 		ABBcontroller::setFrequency(frequency);
 		return true;
 	}
@@ -234,7 +241,6 @@ bool ABBcontroller::autoMeasure(){
 			}
 			frequency= frequency-oneStep;
 			ABBcontroller::setFrequency(frequency);
-
 			//}
 		} else if (ABBcontroller::compare() == -1&& (frequency +oneStep) <= 20000) {
 
@@ -299,6 +305,7 @@ void ABBcontroller::measure(){
 		pressureCount = 0;
 		flagAvg = false;
 		DEBUGOUT("Pressure read over I2C is %.1f Pa\r\n",	pressureCurrent);
+		ABBcontroller::drawUserInterface();
 	}
 
 }
@@ -352,9 +359,11 @@ void ABBcontroller::drawUserInterface() {
 			lcd->print("Automatic Mode");
 			// second row
 			lcd->setCursor(0,1);
-			if (autoMode) { // P ja haluttu P
+			if (autoMode) { // Wanted pressure + current pressure
 				itoa(pasc, buffer, 10);
 				tempString = "WP:" + std::string(buffer) + " CP:";
+				itoa(pressureCurrent, buffer, 10);
+				tempString += std::string(buffer);
 				lcd->print(tempString);
 
 			} else lcd->print("Activate");
@@ -368,10 +377,8 @@ void ABBcontroller::drawUserInterface() {
 				itoa(frequencyTemp, buffer, 10);
 				tempString = "F:" + std::string(buffer) + "% P:";
 
-				/*itoa(frequency, buffer, 10);
+				itoa(pressureCurrent, buffer, 10);
 				tempString += std::string(buffer) + " Pa";
-				lcd->print(tempString);
-				 */
 				lcd->print(tempString);
 
 			} else lcd->print("Activate");
@@ -464,7 +471,7 @@ void ABBcontroller::readUserinput() {
 
 		case right:
 			frequencyTemp += 10;
-			if (frequencyTemp >= 100) frequencyTemp = 0;
+			if (frequencyTemp >= 100) frequencyTemp = 10;
 			break;
 
 		default:
@@ -486,7 +493,7 @@ void ABBcontroller::readUserinput() {
 
 		case right:
 			pascTemp += 5;
-			if (pascTemp >= pascLimit) pascTemp = 1;
+			if (pascTemp >= pascLimit) pascTemp = 5;
 			break;
 
 		default:
