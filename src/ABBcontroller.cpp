@@ -15,6 +15,7 @@ static volatile bool flagAutoMeasure;
 static volatile bool flagAvg;
 static volatile bool flagMeasure;
 static volatile bool flagSlowAlert;
+static volatile bool flagPreventAlert = false;
 static volatile int counterSlow;
 static uint16_t pascLimit = 120;
 
@@ -38,14 +39,17 @@ void SysTick_Handler(void)
 		flagAvg = true;
 	}
 
-	if (counterAvg >= 1000){
+	if (counterAvg >= 500){
 		counterAvg = 0;
 		flagMeasure = true;
 	}
 	counterSlow++;
-	if (counterSlow >= 30000){
+	if (counterSlow >= 60000){
 		counterSlow = 0;
-		flagSlowAlert = true;
+		if (!flagPreventAlert){
+			flagSlowAlert = true;
+		}
+
 	}
 }
 #ifdef __cplusplus
@@ -310,6 +314,7 @@ int ABBcontroller::compare(){
 
 	if (comparison < 2){
 		oneStep = 25;
+		flagPreventAlert = true;
 	} else if (comparison < 5){
 		oneStep = 50;
 	} else if (comparison > 30){
@@ -484,6 +489,8 @@ void ABBcontroller::readUserinput() {
 			pasc = pascTemp;
 			userInterfaceState = menu;
 			autoMode = true;
+			flagPreventAlert = false;
+			counterSlow = 0;
 			break;
 
 		case left:
@@ -502,6 +509,7 @@ void ABBcontroller::readUserinput() {
 		}
 	} else if(userInterfaceState == warningUnreachablePressure) { // NOTIFICATION - given pressure level might not be reachable
 		if (userInput == ok) {
+			flagPreventAlert = true;
 			userInterfaceState = menu;
 		}
 	} else {
