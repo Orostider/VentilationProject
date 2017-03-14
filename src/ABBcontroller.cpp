@@ -2,12 +2,10 @@
  * ABBcontroller.cpp
  *
  *  Created on: 10.3.2017
- *      Author: Tommi
+ *      Authors: Tommi & Hege
  */
 
 #include "ABBcontroller.h"
-#include <cstring>
-#include <cstdio>
 
 static volatile int counter;
 static volatile uint32_t systicks;
@@ -18,7 +16,6 @@ static volatile bool flagAvg;
 static volatile bool flagMeasure;
 static volatile bool flagSlowAlert;
 static volatile int counterSlow;
-//static uint16_t
 static uint16_t pascLimit = 120;
 
 #ifdef __cplusplus
@@ -85,8 +82,8 @@ ABBcontroller::ABBcontroller() {
 
 
 
-	// ------------------------- USER INTRERFACE
-	// Initializing the LCD
+	// ------------------------- USER INTRERFACE INITIALIZATION
+	// Setting up LCD
 	DigitalIoPin* pin1 = new DigitalIoPin(0, 8, false);
 	DigitalIoPin* pin2 = new DigitalIoPin(1, 6, false);
 	DigitalIoPin* pin3 = new DigitalIoPin(1, 8, false);
@@ -107,7 +104,6 @@ ABBcontroller::ABBcontroller() {
 	drawUserInterface();
 
 	frequencyTemp = 50; pascTemp = 50;
-	//
 }
 
 bool ABBcontroller::startAbb(){
@@ -150,7 +146,6 @@ void ABBcontroller::printRegister(uint16_t reg){
 	else {
 		printf("R%d=???\n", reg);
 	}
-
 }
 
 bool ABBcontroller::setFrequency(uint16_t freq){
@@ -208,6 +203,7 @@ bool ABBcontroller::autoMeasure(){
 			ABBcontroller::measure();
 		}
 		return false;
+
 	} else {
 		flagAutoMeasure = false;
 		//uint16_t inc;
@@ -216,8 +212,6 @@ bool ABBcontroller::autoMeasure(){
 		uint8_t result;
 
 		if (ABBcontroller::compare() == 1 && (frequency -oneStep) >= 1000){
-
-			//while(ABBcontroller::measureAndCompare() == 1){
 			// slave: read (2) 16-bit registers starting at register 102 to RX buffer
 			j = 0;
 			do {
@@ -241,7 +235,7 @@ bool ABBcontroller::autoMeasure(){
 			}
 			frequency= frequency-oneStep;
 			ABBcontroller::setFrequency(frequency);
-			//}
+
 		} else if (ABBcontroller::compare() == -1&& (frequency +oneStep) <= 20000) {
 
 			//while(ABBcontroller::measureAndCompare() == -1){
@@ -269,12 +263,9 @@ bool ABBcontroller::autoMeasure(){
 			ABBcontroller::setFrequency(frequency);
 			//}
 		} else {
-
 		}
 
-
 		return true;
-
 	}
 }
 void ABBcontroller::measure(){
@@ -284,7 +275,6 @@ void ABBcontroller::measure(){
 	uint8_t readPressureCmd = 0xF1;
 	int16_t pressure = 0;
 
-	//ITM_write("täs");
 	if (i2c.transaction(0x40, &readPressureCmd, 1, pressureData, 3)) {
 		/* Output temperature. */
 		pressure = (pressureData[0] << 8) | pressureData[1];
@@ -307,7 +297,6 @@ void ABBcontroller::measure(){
 		DEBUGOUT("Pressure read over I2C is %.1f Pa\r\n",	pressureCurrent);
 		ABBcontroller::drawUserInterface();
 	}
-
 }
 
 int ABBcontroller::compare(){
@@ -339,10 +328,15 @@ int ABBcontroller::compare(){
 	} else {
 		return -1;
 	}
-
 }
 
 void ABBcontroller::drawUserInterface() {
+	if (flagSlowAlert) { // set UI state to show alert
+		flagSlowAlert = false;
+		userInterfaceState = warningUnreachablePressure;
+	}
+
+	// print current UI state to ITM
 	char testbuffer[30];
 	snprintf ( testbuffer, 100, "state: %d selection: %d \n", userInterfaceState, selection);
 	ITM_write(testbuffer);
@@ -405,8 +399,14 @@ void ABBcontroller::drawUserInterface() {
 		lcd->print(tempString);
 		break;
 
+	case warningUnreachablePressure:
+		lcd->print("Unreachable");
+		lcd->setCursor(0,1);
+		lcd->print("pressure!");
+		break;
+
 	default:
-		ITM_write("ei näin! \n");
+		ITM_write("drawUserInterface: Error!\n");
 		break;
 	}
 }
@@ -446,17 +446,17 @@ void ABBcontroller::readUserinput() {
 	Board_UARTPutChar('\r');
 	Board_UARTPutChar('\n');
 
-	if (userInterfaceState == menu) { // MENU
+	if (userInterfaceState == menu) { // MENU - TOGGLE BETWEEN MODES
 		if (userInput == ok) {
 			userInterfaceState = selection;
 			// temppien settaus  tähän
-		} else if (userInput == left || userInput == right) { // toggle between automatic and manual mode
+		} else if (userInput == left || userInput == right) {
 			if (selection == automaticMode) {
 				selection = manualMode;
 			} else selection = automaticMode;
 		}
 
-	} else if (userInterfaceState == manualMode) { // Freq
+	} else if (userInterfaceState == manualMode) { // SETTTING FREQUENCY/FAN SPEED FOR MANUAL MODE
 		switch (userInput) {
 		case ok:
 			frequency = (20000/100)*frequencyTemp;
@@ -478,7 +478,7 @@ void ABBcontroller::readUserinput() {
 			ITM_write("error'\n");
 			break;
 		}
-	} else if (userInterfaceState == automaticMode) { // Pasc
+	} else if (userInterfaceState == automaticMode) { // SETTING PRESSURE LEVEL FOR AUTOMATIC MODE
 		switch (userInput) {
 		case ok:
 			pasc = pascTemp;
@@ -500,11 +500,15 @@ void ABBcontroller::readUserinput() {
 			ITM_write("error'\n");
 			break;
 		}
+	} else if(userInterfaceState == warningUnreachablePressure) { // NOTIFICATION - given pressure level might not be reachable
+		if (userInput == ok) {
+			userInterfaceState = menu;
+		}
 	} else {
-		ITM_write("ei tänne\n");
+		ITM_write("readUserInput: Something went wrong!\n");
 	}
 	drawUserInterface();
-	Sleep(200); // poista tää
+	Sleep(200); // We don't want to immediately read another input
 }
 
 ABBcontroller::~ABBcontroller() {
