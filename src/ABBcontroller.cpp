@@ -183,6 +183,9 @@ bool ABBcontroller::getMode(){
 
 bool ABBcontroller::manualMeasure(){
 	if (!flagAutoMeasure) {
+		if (flagMeasure){
+			ABBcontroller::measure();
+		}
 		return false;
 	}else {
 		flagAutoMeasure = false;
