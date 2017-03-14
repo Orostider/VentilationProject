@@ -12,7 +12,6 @@
 #include <cstdio>
 #include <stdlib.h> // itoa
 
-
 #include "ModbusMaster.h"
 #include "I2C.h"
 #include "ITM_write.h"

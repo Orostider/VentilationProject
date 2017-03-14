@@ -15,6 +15,7 @@ static volatile bool flagAutoMeasure;
 static volatile bool flagAvg;
 static volatile bool flagMeasure;
 static volatile bool flagSlowAlert;
+static volatile int counterSlow;
 static uint16_t pascLimit = 120;
 
 #ifdef __cplusplus
@@ -40,6 +41,11 @@ void SysTick_Handler(void)
 	if (counterAvg >= 1000){
 		counterAvg = 0;
 		flagMeasure = true;
+	}
+	counterSlow++;
+	if (counterSlow >= 30000){
+		counterSlow = 0;
+		flagSlowAlert = true;
 	}
 }
 #ifdef __cplusplus
@@ -178,9 +184,13 @@ bool ABBcontroller::getMode(){
 
 bool ABBcontroller::manualMeasure(){
 	if (!flagAutoMeasure) {
+		if (flagMeasure){
+			ABBcontroller::measure();
+		}
 		return false;
 	}else {
 		flagAutoMeasure = false;
+		ABBcontroller::drawUserInterface();
 		ABBcontroller::setFrequency(frequency);
 		return true;
 	}
@@ -193,6 +203,7 @@ bool ABBcontroller::autoMeasure(){
 			ABBcontroller::measure();
 		}
 		return false;
+
 	} else {
 		flagAutoMeasure = false;
 		//uint16_t inc;
@@ -284,6 +295,7 @@ void ABBcontroller::measure(){
 		pressureCount = 0;
 		flagAvg = false;
 		DEBUGOUT("Pressure read over I2C is %.1f Pa\r\n",	pressureCurrent);
+		ABBcontroller::drawUserInterface();
 	}
 }
 
@@ -319,6 +331,12 @@ int ABBcontroller::compare(){
 }
 
 void ABBcontroller::drawUserInterface() {
+	if (flagSlowAlert) { // set UI state to show alert
+		flagSlowAlert = false;
+		userInterfaceState = warningUnreachablePressure;
+	}
+
+	// print current UI state to ITM
 	char testbuffer[30];
 	snprintf ( testbuffer, 100, "state: %d selection: %d \n", userInterfaceState, selection);
 	ITM_write(testbuffer);
@@ -453,7 +471,7 @@ void ABBcontroller::readUserinput() {
 
 		case right:
 			frequencyTemp += 10;
-			if (frequencyTemp >= 100) frequencyTemp = 0;
+			if (frequencyTemp >= 100) frequencyTemp = 10;
 			break;
 
 		default:
@@ -475,7 +493,7 @@ void ABBcontroller::readUserinput() {
 
 		case right:
 			pascTemp += 5;
-			if (pascTemp >= pascLimit) pascTemp = 1;
+			if (pascTemp >= pascLimit) pascTemp = 5;
 			break;
 
 		default:
