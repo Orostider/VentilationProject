@@ -320,7 +320,7 @@ int ABBcontroller::compare(){
 	}
 
 	if (comparison < 2){
-		oneStep = 10;
+		oneStep = 25;
 	} else if (comparison < 5){
 		oneStep = 50;
 	} else if (comparison > 30){
