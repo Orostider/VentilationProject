@@ -40,9 +40,11 @@ private:
 	bool autoMode;
 	ModbusMaster *node;
 	//I2C i2c;
+	static const uint16_t frequencyLimit = 100;
 	uint16_t frequency;
 	uint16_t pasc;
 	int tickLimit; //One tick is 100ms
+	uint16_t oneStep;
 
 	// User interface
 	LiquidCrystal* lcd;

@@ -11,7 +11,7 @@
 
 static volatile int counter;
 static volatile uint32_t systicks;
-static uint16_t frequencyLimit = 1000;
+//static uint16_t
 static uint16_t pascLimit = 120;
 
 #ifdef __cplusplus
@@ -51,6 +51,8 @@ ABBcontroller::ABBcontroller() {
 	//I2C i2c = new I2C(0, 100000);
 	frequency = 5000;
 	pasc = 20;
+	tickLimit = 300;
+	oneStep = 250;
 
 	// ------------------------- USER INTRERFACE
 	// Initializing the LCD
@@ -73,7 +75,7 @@ ABBcontroller::ABBcontroller() {
 
 	drawUserInterface();
 
-	frequencyTemp = 0; pascTemp = 0;
+	frequencyTemp = 50; pascTemp = 50;
 	//
 }
 
@@ -166,7 +168,7 @@ bool ABBcontroller::autoMeasure(){
 	int j = 0;
 	uint8_t result;
 
-	if (ABBcontroller::measureAndCompare() == 1 && (frequency -250) >= 1000){
+	if (ABBcontroller::measureAndCompare() == 1 && (frequency -oneStep) >= 1000){
 
 		while(ABBcontroller::measureAndCompare() == 1){
 			// slave: read (2) 16-bit registers starting at register 102 to RX buffer
@@ -184,12 +186,12 @@ bool ABBcontroller::autoMeasure(){
 				printf("ctr=%d\n",j);
 			}
 
-			Sleep(3000);
+			//Sleep(3000);
 			i++;
 			if(i >= 20) {
 				i=0;
 			}
-			frequency= frequency-250;
+			frequency= frequency-oneStep;
 			ABBcontroller::setFrequency(frequency);
 
 		}
@@ -211,12 +213,12 @@ bool ABBcontroller::autoMeasure(){
 				printf("ctr=%d\n",j);
 			}
 
-			Sleep(3000);
+			//Sleep(3000);
 			i++;
 			if(i >= 20) {
 				i=0;
 			}
-			frequency+=250;
+			frequency+=oneStep;
 			ABBcontroller::setFrequency(frequency);
 		}
 	} else {
@@ -245,16 +247,37 @@ int ABBcontroller::measureAndCompare(){
 	}
 	//Sleep(100);
 	pressure = pressure/240.0;
-	if (pressure > pasc){
-		return 1;
-	} else if (pressure == pasc){
+
+	int comparison;
+	if(pressure >= pasc){
+		comparison = pressure - pasc;
+	} else {
+		comparison = pasc - pressure;
+	}
+
+	if (comparison < 2){
+		oneStep = 10;
+	} else if (comparison < 5){
+		oneStep = 100;
+	} else if (comparison > 15){
+		oneStep = 1000;
+	}else if (comparison > 10){
+		oneStep = 500;
+	} else {
+		oneStep = 250;
+	}
+
+
+	if (pressure == pasc){
 		return 0;
+	} else if (pressure > pasc){
+		return 1;
 	} else {
 		return -1;
 	}
 }
 
-// TODO showing the notification/error from automatic mode
+
 void ABBcontroller::drawUserInterface() {
 	char testbuffer[30];
 	snprintf ( testbuffer, 100, "state: %d selection: %d \n", userInterfaceState, selection);
@@ -303,11 +326,21 @@ void ABBcontroller::drawUserInterface() {
 
 void ABBcontroller::readUserinput() {
 	int userInput = 5;
+	ITM_write("1488\n");
 	if (switch1Ok->read()) {
+		while(switch1Ok->read()){
+			Sleep(10);
+		}
 		userInput = ok;
 	} else if (switch2Left->read()) {
+		while(switch1Ok->read()){
+			Sleep(10);
+		}
 		userInput = left;
 	} else if (switch3Right->read()) {
+		while(switch1Ok->read()){
+			Sleep(10);
+		}
 		userInput = right;
 	} else {
 		return;
@@ -326,17 +359,19 @@ void ABBcontroller::readUserinput() {
 	} else if (userInterfaceState == manualMode) { // Freq
 		switch (userInput) {
 		case ok:
+			frequency = (10000/100)*frequencyTemp;
 			userInterfaceState = menu;
+			autoMode = false;
 			break;
 
 		case left:
-			frequencyTemp -= 100;
-			if (frequencyTemp <= 0) frequencyTemp = frequencyLimit;
+			frequencyTemp -= 10;
+			if (frequencyTemp <= 0) frequencyTemp = 100;
 			break;
 
 		case right:
-			frequencyTemp += 100;
-			if (frequencyTemp >= frequencyLimit) frequencyTemp = 0;
+			frequencyTemp += 10;
+			if (frequencyTemp >= 100) frequencyTemp = 0;
 			break;
 
 		default:
@@ -346,17 +381,19 @@ void ABBcontroller::readUserinput() {
 	} else if (userInterfaceState == automaticMode) { // Pasc
 		switch (userInput) {
 		case ok:
+			pasc = pascTemp;
 			userInterfaceState = menu;
+			autoMode = true;
 			break;
 
 		case left:
 			pascTemp -= 5;
-			if (pascTemp <= 0) pascTemp = pascLimit;
+			if (pascTemp <= 1) pascTemp = pascLimit;
 			break;
 
 		case right:
 			pascTemp += 5;
-			if (pascTemp >= pascLimit) pascTemp = 0;
+			if (pascTemp >= pascLimit) pascTemp = 1;
 			break;
 
 		default:
@@ -367,7 +404,7 @@ void ABBcontroller::readUserinput() {
 		ITM_write("ei tänne\n");
 	}
 	drawUserInterface();
-	Sleep(200); // poista tää
+	//Sleep(200); // poista tää
 }
 
 ABBcontroller::~ABBcontroller() {

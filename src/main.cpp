@@ -181,6 +181,8 @@ int main(void)
 
 		if (abbController.getMode()){
 			abbController.autoMeasure();
+		} else{
+			abbController.manualMeasure();
 		}
 	}
 
