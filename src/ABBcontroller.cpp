@@ -186,7 +186,7 @@ bool ABBcontroller::autoMeasure(){
 				printf("ctr=%d\n",j);
 			}
 
-			//Sleep(3000);
+			Sleep(3000);
 			i++;
 			if(i >= 20) {
 				i=0;
@@ -213,7 +213,7 @@ bool ABBcontroller::autoMeasure(){
 				printf("ctr=%d\n",j);
 			}
 
-			//Sleep(3000);
+			Sleep(3000);
 			i++;
 			if(i >= 20) {
 				i=0;
