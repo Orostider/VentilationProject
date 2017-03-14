@@ -28,7 +28,8 @@ public:
 	bool getMode();
 	void printRegister(uint16_t reg);
 	bool setFrequency(uint16_t freq);
-	int measureAndCompare();
+	void measure();
+	int compare();
 	bool startAbb();
 	bool stopAbb();
 	void printData();
@@ -45,7 +46,9 @@ private:
 	uint16_t pasc;
 	int tickLimit; //One tick is 100ms
 	uint16_t oneStep;
-
+	float pressureCurrent;
+	float pressureAvg;
+	int pressureCount;
 	// User interface
 	LiquidCrystal* lcd;
 	enum userInterfaceStates { menu, automaticMode, manualMode, endOfEnum };
