@@ -348,30 +348,53 @@ void ABBcontroller::drawUserInterface() {
 	switch(userInterfaceState) {
 	case menu:
 		if (selection == automaticMode) {
+			// first row
 			lcd->print("Automatic Mode");
+			// second row
+			lcd->setCursor(0,1);
+			if (autoMode) { // P ja haluttu P
+				itoa(pasc, buffer, 10);
+				tempString = "WP:" + std::string(buffer) + " CP:";
+				lcd->print(tempString);
+
+			} else lcd->print("Activate");
 
 		} else if (selection == manualMode) {
+			// first row
 			lcd->print("Manual Mode");
+			// second row
+			lcd->setCursor(0,1);
+			if (!autoMode) { // Freq ja P
+				itoa(frequencyTemp, buffer, 10);
+				tempString = "F:" + std::string(buffer) + "% P:";
+
+				/*itoa(frequency, buffer, 10);
+				tempString += std::string(buffer) + " Pa";
+				lcd->print(tempString);
+				 */
+				lcd->print(tempString);
+
+			} else lcd->print("Activate");
 		}
 		break;
 
 	case automaticMode:
 		// upper line
-		lcd->print("Set pressure(?):");
+		lcd->print("Set pressure:");
 		//lower line
 		lcd->setCursor(0,1);
 		itoa(pascTemp, buffer, 10);
-		tempString = std::string(buffer);
+		tempString = std::string(buffer) + " Pa";
 		lcd->print(tempString);
 		break;
 
 	case manualMode:
 		// upper line
-		lcd->print("Set fan RPM:");
+		lcd->print("Set fan speed:");
 		// lower line
 		lcd->setCursor(0,1);
 		itoa(frequencyTemp, buffer, 10);
-		tempString = std::string(buffer);
+		tempString = std::string(buffer) + "%";
 		lcd->print(tempString);
 		break;
 
@@ -384,6 +407,8 @@ void ABBcontroller::drawUserInterface() {
 void ABBcontroller::readUserinput() {
 	int userInput = 5;
 
+	/*
+	// ohjailu switcheillä pois käytöstä.
 	if (switch1Ok->read()) {
 		userInput = ok;
 	} else if (switch2Left->read()) {
@@ -392,7 +417,27 @@ void ABBcontroller::readUserinput() {
 		userInput = right;
 	} else {
 		return;
+	}*/
+
+	int c;
+	c = Board_UARTGetChar();
+	switch(c) {
+	case 49: // 1
+		userInput = left;
+		break;
+	case 50: // 2
+		userInput = right;
+		break;
+
+	case 51: // 3
+		userInput = ok;
+		break;
+	default: // ei painettu mitään
+		return;
 	}
+	Board_UARTPutChar(c);
+	Board_UARTPutChar('\r');
+	Board_UARTPutChar('\n');
 
 	if (userInterfaceState == menu) { // MENU
 		if (userInput == ok) {
