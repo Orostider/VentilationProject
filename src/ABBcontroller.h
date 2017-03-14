@@ -51,7 +51,7 @@ private:
 	int pressureCount;
 	// User interface
 	LiquidCrystal* lcd;
-	enum userInterfaceStates { menu, automaticMode, manualMode, endOfEnum };
+	enum userInterfaceStates { menu, automaticMode, manualMode, warningUnreachablePressure, endOfEnum };
 	int userInterfaceState, selection;
 	enum interfaceControls { ok, left, right };
 	DigitalIoPin *switch1Ok, *switch2Left, *switch3Right;
