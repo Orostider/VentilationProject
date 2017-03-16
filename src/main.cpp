@@ -59,15 +59,12 @@ int main(void)
 	/* Enable ITM printing */
 	ITM_init();
 
+	ABBcontroller abbController;	// create controller object
+	abbController.startAbb();		// initialize connection with ABB
 
-	//abbModbusTest();
-	//i2cTest();
-
-	ABBcontroller abbController;
-	abbController.startAbb();
 	while (1) {
-		abbController.readUserinput();
-		if (abbController.getMode()){
+		abbController.readUserinput(); 	// read user input
+		if (abbController.getMode()) {
 			abbController.autoMeasure();
 		} else{
 			abbController.manualMeasure();
