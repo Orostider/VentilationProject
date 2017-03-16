@@ -1,10 +1,9 @@
 /*
 ===============================================================================
- Name        : main.c
- Author      : $(author)
- Version     :
- Copyright   : $(copyright)
- Description : main definition
+ Name        : main.cpp
+ Authors     : Tommi Pälviö, Henri Riisalo
+ Version     : 1.0
+ Description : Program for controlling an ABB via user interface with automatic and manual modes.
 ===============================================================================
  */
 
@@ -17,22 +16,14 @@
 #endif
 
 #include <cr_section_macros.h>
-
-// TODO: insert other include files here
-
-// TODO: insert other definitions and declarations here
-
+// Includes - libraries
 #include <cstring>
 #include <cstdio>
-
-#include "ModbusMaster.h"
-#include "I2C.h"
-#include "ITM_write.h"
+// Includes - own files
 #include "ABBcontroller.h"
 
-
 /**
- * @brief	Main UART program body
+ * @brief	Main program body
  * @return	Always returns 1
  */
 int main(void)
@@ -62,8 +53,12 @@ int main(void)
 	ABBcontroller abbController;	// create controller object
 	abbController.startAbb();		// initialize connection with ABB
 
+	// Main loop that keeps controlling both UI and ABB
 	while (1) {
-		abbController.readUserinput(); 	// read user input
+		// UI
+		abbController.readUserinput();
+
+		// ABB
 		if (abbController.getMode()) {
 			abbController.autoMeasure();
 		} else{

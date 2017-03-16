@@ -2,16 +2,17 @@
  * ABBcontroller.h
  *
  *  Created on: 10.3.2017
- *      Author: Tommi
+ *  Authors: Tommi Pälviö, Henri Riisalo
  */
 
 #ifndef ABBCONTROLLER_H_
 #define ABBCONTROLLER_H_
 
+// Libraries
 #include <cstring>
 #include <cstdio>
 #include <stdlib.h> // itoa
-
+// Own files
 #include "ModbusMaster.h"
 #include "I2C.h"
 #include "ITM_write.h"

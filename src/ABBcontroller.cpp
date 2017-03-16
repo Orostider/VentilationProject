@@ -3,8 +3,9 @@
  *
  * Created on: 10.3.2017
  * Authors: Tommi Pälviö, Henri Riisalo
- * Description: Class for controlling a ventilation system.
- *
+ * Description: Class for controlling a ventilation system via user interface.
+ *				Methods that need to be looped for the class to function as intended:
+ *				"readUserinput" and "autoMeasure" or "manualMeasure" depending on which mode is active.
  */
 
 #include "ABBcontroller.h"

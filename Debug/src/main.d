@@ -49,9 +49,9 @@ src/main.o src/main.d: ../src/main.cpp \
  C:\Users\Tommi\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/i2cs_15xx.h \
  C:\Users\Tommi\Documents\LPCXpresso_8.2.2_650\workspace\lpc_board_nxp_lpcxpresso_1549\inc/board_api.h \
  C:\Users\Tommi\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/lpc_types.h \
- ../src/ModbusMaster.h ../src/word.h ../src/SerialPort.h ../src/I2C.h \
- ../src/ITM_write.h ../src/ABBcontroller.h ../src/LiquidCrystal.h \
- ../src/DigitalIoPin.h
+ ../src/ABBcontroller.h ../src/ModbusMaster.h ../src/word.h \
+ ../src/SerialPort.h ../src/I2C.h ../src/ITM_write.h \
+ ../src/LiquidCrystal.h ../src/DigitalIoPin.h
 
 C:\Users\Tommi\Documents\LPCXpresso_8.2.2_650\workspace\lpc_board_nxp_lpcxpresso_1549\inc/board.h:
 
@@ -153,6 +153,8 @@ C:\Users\Tommi\Documents\LPCXpresso_8.2.2_650\workspace\lpc_board_nxp_lpcxpresso
 
 C:\Users\Tommi\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/lpc_types.h:
 
+../src/ABBcontroller.h:
+
 ../src/ModbusMaster.h:
 
 ../src/word.h:
@@ -162,8 +164,6 @@ C:\Users\Tommi\Documents\LPCXpresso_8.2.2_650\workspace\lpc_chip_15xx\inc/lpc_ty
 ../src/I2C.h:
 
 ../src/ITM_write.h:
-
-../src/ABBcontroller.h:
 
 ../src/LiquidCrystal.h:
 
