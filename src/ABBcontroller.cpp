@@ -75,7 +75,7 @@ ABBcontroller::ABBcontroller() {
 	autoMode = true;
 	node = new ModbusMaster(2);
 	//I2C i2c = new I2C(0, 100000);
-	frequency = 5000;
+	frequency = 3000;
 	pasc = 20;
 	tickLimit = 300;
 	oneStep = 250;
